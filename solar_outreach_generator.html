@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Solar Outreach Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:18px;line-height:1.4}
+    label{display:block;margin-top:8px}
+    input,textarea,select{width:100%;padding:8px;margin-top:4px;border-radius:6px;border:1px solid #ddd}
+    button{margin-top:12px;padding:10px 14px;border-radius:8px;border:none;background:#0b74de;color:white;cursor:pointer}
+    button:disabled{opacity:0.6;cursor:not-allowed}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .output{white-space:pre-wrap;background:#f7f9fc;padding:12px;border-radius:8px;border:1px solid #eee;margin-top:10px}
+    .container{max-width:880px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Solar Outreach Generator (Hindi)</h2>
+    <div>
+      <label>Company name (target): <input id="company" placeholder="Ex: Surya Solar Pvt Ltd"/></label>
+      <label>Contact name (optional): <input id="contact" placeholder="Ex: Rahul"/></label>
+      <label>Your name: <input id="yourName" placeholder="Apna naam"/></label>
+      <label>Your company/signature: <input id="yourCompany" placeholder="Apni company"/></label>
+      <label>Phone / WhatsApp: <input id="phone" placeholder="Mobile number"/></label>
+      <label>Estimated saving percent (number): <input id="saving" placeholder="Ex: 40"/></label>
+      <div class="row">
+        <button id="genAll">Generate All Templates</button>
+        <button id="copyAll">Copy All to Clipboard</button>
+      </div>
+      <div id="results"></div>
+    </div>
+  </div>
+
+  <script>
+    const data = {
+      subjectTemplates: [
+        "{company} — Mahine ke telecaller kharcha kam karne ka smart tareeka",
+        "Reduce telecaller costs — Automated calling agent for {company}",
+        "{company} ke liye 50%+ kharcha bachane ka solution"
+      ],
+      emailTemplates: [
+        `Namaste {contactName} ji,
+
+Main {yourName} hoon — ek calling-agent solution provider. Hamari automated calling-agent aapke telecalling team ko replace kar ke {estimatedSaving}% tak monthly expense bachati hai aur replies ko smartly route kar deti hai jisse conversion improve hota hai.
+
+Kuch fayde:
+- Monthly telecaller payroll aur training ka karcha kam
+- 24x7 automated follow-ups aur reminders
+- Lead qualification + appointment booking bina extra HR ke
+- Analytics: call logs, response rate, aur improvement suggestions
+
+Agar aap chahen to main ek 7-14 din ka pilot set up kar deta hoon jisme aap khud dekh sakte hain kitna kharcha aur time bach raha hai. Kya main aapke liye ek short demo schedule karu?
+
+Shukriya,
+{yourName}
+{phone}
+{companySignature}`
+      ],
+      linkedinTemplates: [
+        `Hi {contactName},
+Main {yourName}. Ham ek calling-agent banate hain jo solar businesses ke liye telecalling cost significantly kam karta hai aur appointment-booking automate kar deta hai. Kya aap ek 10-minute call ke liye available hain?`
+      ],
+      whatsappTemplates: [
+        `Hi {contactName}, main {yourName}. Agar aap telecallers par mahine bhar ka kharcha kam karna chahte hain to main ek automated calling-agent setup kar ke 30-60% tak expense cut dikhana chahta hoon. Interested?`
+      ],
+      coldCallScript: `Hello {contactName}, main {yourName} bol raha/rahi hoon from {yourCompany}. Aap se ek chhota sawal — kya aap currently telecallers ke monthly payroll ya training cost se pareshan hain?
+(If yes) — Ham ek calling-agent bana dete hain jo regular follow-ups, lead qualification aur appointment booking automate karega. Isse aapko ek month me estimated {estimatedSaving}% tak cost saving dekhne ko milegi. Kya main 10 minute me aapko demo dikhaun?`,
+      followUpTemplates: [
+        `Hi {contactName}, sirf follow-up kar raha/rahi hoon regarding mera pehle bheja message — kya aap pilot/demo me interest rakhte hain? Ham pehle 7 din free trial offer karte hain taaki aap ROI khud judge kar saken.`
+      ]
+    };
+
+    function fill(template, slots){
+      return template.replace(/\{(\w+)\}/g,(m,k)=>slots[k]!==undefined?slots[k]:m);
+    }
+
+    function gen(){
+      const slots = {
+        company: document.getElementById('company').value || 'Company',
+        contactName: document.getElementById('contact').value || 'Sir/Madam',
+        yourName: document.getElementById('yourName').value || 'Aapka Naam',
+        yourCompany: document.getElementById('yourCompany').value || 'Aapki Company',
+        phone: document.getElementById('phone').value || 'Phone',
+        estimatedSaving: document.getElementById('saving').value || '30'
+      };
+
+      const out = [];
+
+      // Subject (pick first template)
+      const subject = fill(data.subjectTemplates[0], slots);
+      out.push('Subject:\n'+subject+'\n---');
+
+      // Email
+      const email = fill(data.emailTemplates[0], slots);
+      out.push('Email (Hindi):\n'+email+'\n---');
+
+      // LinkedIn
+      const ln = fill(data.linkedinTemplates[0], slots);
+      out.push('LinkedIn Message:\n'+ln+'\n---');
+
+      // WhatsApp
+      const wa = fill(data.whatsappTemplates[0], slots);
+      out.push('WhatsApp Message:\n'+wa+'\n---');
+
+      // Cold call
+      const cc = fill(data.coldCallScript, slots);
+      out.push('Cold Call Script:\n'+cc+'\n---');
+
+      // Follow-up
+      const fu = fill(data.followUpTemplates[0], slots);
+      out.push('Follow-up:\n'+fu+'\n---');
+
+      document.getElementById('results').innerHTML = '<div class="output">'+out.join('\n\n')+'</div>';
+    }
+
+    document.getElementById('genAll').addEventListener('click',gen);
+    document.getElementById('copyAll').addEventListener('click',async ()=>{
+      const text = document.querySelector('#results .output')?.innerText || '';
+      if(!text){ alert('Please generate first'); return; }
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Copied to clipboard — ab aap cursor ya kahin bhi paste kar sakte hain.');
+      } catch (err) {
+        console.error(err);
+        alert('Copy failed. Manually select and copy the text.');
+      }
+    });
+
+    // Optional helper in devtools
+    window.openGenerator = function(){
+      const w = window.open();
+      w.document.write(document.documentElement.outerHTML);
+      w.document.close();
+    }
+  </script>
+</body>
+</html>
